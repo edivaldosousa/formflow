@@ -1,0 +1,58 @@
+
+// ADICIONE ISTO AO SEU schema.prisma EXISTENTE
+
+enum SharePointSyncStatus {
+  PENDING
+  SYNCING
+  SYNCED
+  FAILED
+  DISABLED
+}
+
+model SharePointSyncLog {
+  id String @id @default(cuid())
+  teamId String
+  formId String?
+  submissionId String?
+  status SharePointSyncStatus
+  action String
+  sharePointItemId String?
+  sharePointUrl String?
+  errorMessage String? @db.Text
+  errorCode String?
+  retryCount Int @default(0)
+  metadata Json?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  syncedAt DateTime?
+  
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  @@index([teamId])
+  @@index([submissionId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ADICIONE ESTES CAMPOS AO MODELO Team:
+// sharePointEnabled Boolean @default(false)
+// sharePointSiteUrl String? @db.Text
+// sharePointDriveId String?
+// sharePointFolderId String?
+// sharePointClientId String? @db.Text
+// sharePointClientSecret String? @db.Text
+// sharePointTenantId String?
+// sharePointSyncEnabled Boolean @default(true)
+// sharePointAutoSync Boolean @default(true)
+// sharePointSyncInterval Int @default(300)
+// lastSharePointSync DateTime?
+// sharePointLogs SharePointSyncLog[]
+
+// ADICIONE ESTES CAMPOS AO MODELO FormSubmission:
+// sharePointSynced Boolean @default(false)
+// sharePointItemId String?
+// sharePointUrl String?
+// sharePointSyncStatus SharePointSyncStatus @default(PENDING)
+// sharePointLastSync DateTime?
+// sharePointSyncError String? @db.Text

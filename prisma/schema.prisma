@@ -1,0 +1,176 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teams       TeamMember[]
+  forms       Form[]
+  submissions FormSubmission[]
+  auditLogs   AuditLog[]
+
+  @@index([email])
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   TeamMember[]
+  forms     Form[]
+  auditLogs AuditLog[]
+
+  // SharePoint Integration
+  sharePointEnabled      Boolean   @default(false)
+  sharePointSiteUrl      String?   @db.Text
+  sharePointDriveId      String?
+  sharePointFolderId     String?
+  sharePointClientId     String?   @db.Text
+  sharePointClientSecret String?   @db.Text
+  sharePointTenantId     String?
+  sharePointSyncEnabled  Boolean   @default(true)
+  sharePointAutoSync     Boolean   @default(true)
+  sharePointSyncInterval Int       @default(300)
+  lastSharePointSync     DateTime?
+
+  // Relations
+  sharePointLogs SharePointSyncLog[]
+
+  @@index([slug])
+}
+
+model TeamMember {
+  id     String @id @default(cuid())
+  userId String
+  teamId String
+  role   Role   @default(VIEWER)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, teamId])
+  @@index([userId])
+  @@index([teamId])
+}
+
+enum Role {
+  ADMIN
+  CREATOR
+  EDITOR
+  REVIEWER
+  VIEWER
+}
+
+enum SharePointSyncStatus {
+  PENDING
+  SYNCING
+  SYNCED
+  FAILED
+  DISABLED
+}
+
+model Form {
+  id        String  @id @default(cuid())
+  title     String
+  slug      String  @unique
+  createdBy String
+  teamId    String?
+
+  user User  @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  team Team? @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  fields      Json    @default("[]")
+  settings    Json    @default("{}")
+  isPublished Boolean @default(false)
+
+  submissions FormSubmission[]
+  auditLogs   AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdBy])
+  @@index([teamId])
+  @@index([slug])
+}
+
+model FormSubmission {
+  id     String @id @default(cuid())
+  formId String
+  form   Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  // SharePoint Integration
+  sharePointSynced     Boolean              @default(false)
+  sharePointItemId     String?
+  sharePointUrl        String?
+  sharePointSyncStatus SharePointSyncStatus @default(PENDING)
+  sharePointLastSync   DateTime?
+  sharePointSyncError  String?              @db.Text
+
+  data      Json
+  ipAddress String?
+  createdAt DateTime @default(now())
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+
+  @@index([formId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  formId    String?
+  form      Form?    @relation(fields: [formId], references: [id])
+  details   Json?
+  createdAt DateTime @default(now())
+  Team      Team?    @relation(fields: [teamId], references: [id])
+  teamId    String?
+
+  @@index([userId])
+  @@index([formId])
+}
+
+model SharePointSyncLog {
+  id               String               @id @default(cuid())
+  teamId           String
+  formId           String?
+  submissionId     String?
+  status           SharePointSyncStatus
+  action           String
+  sharePointItemId String?
+  sharePointUrl    String?
+  errorMessage     String?              @db.Text
+  errorCode        String?
+  retryCount       Int                  @default(0)
+  metadata         Json?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  syncedAt  DateTime?
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([submissionId])
+  @@index([status])
+  @@index([createdAt])
+}

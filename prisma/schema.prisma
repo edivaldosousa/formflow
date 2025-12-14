@@ -1,4 +1,4 @@
-generator client {
+    generator client {
   provider = "prisma-client-js"
 }
 
@@ -109,6 +109,9 @@ model Form {
   @@index([createdBy])
   @@index([teamId])
   @@index([slug])
+  elements    FormElement[]   // Form fields
+  theme       FormTheme?      // Design configuration
+  integrations FormIntegration[] // Integrations (SharePoint, Email, etc)
 }
 
 model FormSubmission {
@@ -173,4 +176,63 @@ model SharePointSyncLog {
   @@index([submissionId])
   @@index([status])
   @@index([createdAt])
+
+
+// FormFlow - Form Builder Models
+model FormElement {
+  id        String   @id @default(cuid())
+  formId    String
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  
+  type      String   // TEXT, TEXTAREA, NUMBER, SELECT, CHECKBOX, DATE, FILE_UPLOAD, SIGNATURE
+  label     String
+  required  Boolean  @default(false)
+  placeholder String?
+  options   String[]  // For SELECT, CHECKBOX
+  
+  order     Int      @default(0)
+  logic     Json?    // Conditional visibility rules
+  metadata  Json?    // Custom properties
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([formId])
 }
+
+model FormTheme {
+  id           String @id @default(cuid())
+  formId       String @unique
+  form         Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
+  
+  bgColor      String @default("#ffffff")
+  formColor    String @default("#ffffff")
+  textColor    String @default("#1e293b")
+  buttonColor  String @default("#f97316")
+  bannerImage  String?
+  logoUrl      String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FormIntegration {
+  id           String @id @default(cuid())
+  formId       String
+  form         Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
+  
+  type         String // SHAREPOINT, EMAIL, SLACK, ZAPIER
+  enabled      Boolean @default(false)
+  config       Json   // Service-specific configuration
+  
+  lastError    String?
+  lastSyncAt   DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([formId, type])
+}
+
+}
+99

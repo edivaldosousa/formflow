@@ -1,0 +1,75 @@
+// This file is for Prisma schema reference
+// To be placed in prisma/schema.prisma in your project root
+
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("DATABASE_URL")
+// }
+//
+// generator client {
+//   provider = "prisma-client-js"
+// }
+//
+// model User {
+//   id        String     @id @default(cuid())
+//   email     String     @unique
+//   name      String?
+//   avatar    String?
+//   createdAt DateTime   @default(now())
+//   updatedAt DateTime   @updatedAt
+//   forms     Form[]
+//   responses FormResponse[]
+// }
+//
+// model Form {
+//   id             String        @id @default(cuid())
+//   title          String
+//   description    String?
+//   userId         String
+//   user           User          @relation(fields: [userId], references: [id])
+//   elements       FormElement[]
+//   responses      FormResponse[]
+//   theme          Json?
+//   integrations   Json?
+//   collaborators  Collaborator[]
+//   published      Boolean       @default(false)
+//   createdAt      DateTime      @default(now())
+//   updatedAt      DateTime      @updatedAt
+// }
+//
+// model FormElement {
+//   id         String   @id @default(cuid())
+//   formId     String
+//   form       Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+//   type       String
+//   label      String
+//   required   Boolean  @default(false)
+//   options    String[]?
+//   order      Int
+//   createdAt  DateTime @default(now())
+// }
+//
+// model FormResponse {
+//   id           String   @id @default(cuid())
+//   formId       String
+//   form         Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+//   userId       String?
+//   user         User?    @relation(fields: [userId], references: [id])
+//   data         Json
+//   completedAt  DateTime?
+//   createdAt    DateTime @default(now())
+// }
+//
+// model Collaborator {
+//   id     String @id @default(cuid())
+//   formId String
+//   form   Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
+//   userId String
+//   role   String @default("VIEWER")
+// }
+
+// DEPLOY INSTRUCTIONS:
+// 1. Copy this schema to prisma/schema.prisma
+// 2. Run: npx prisma migrate dev --name init
+// 3. Run: npx prisma generate
+// 4. Setup DATABASE_URL in .env.local
